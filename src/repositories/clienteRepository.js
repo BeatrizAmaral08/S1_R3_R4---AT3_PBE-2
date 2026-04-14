@@ -40,7 +40,7 @@ const clienteRepository = {
         const conn = await connection.getConnection();
         try {
             //busca todos os clientes no banco de dados
-            const [clientes] = await conn.execute('SELECT * FROM clientes');
+            const [clientes] = await conn.execute('SELECT c.Nome, c.CPF, e.Cidade, t.NumeroTel* FROM clientes');
 
             //para cada cliente, busca seu telefone e endereço cadastrados
             for (let cliente of clientes) {
@@ -67,6 +67,7 @@ const clienteRepository = {
 
         } catch (error) {
             throw error;
+
         } finally {
             conn.release();
         }
