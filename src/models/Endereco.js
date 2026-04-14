@@ -2,25 +2,24 @@ export class Endereco {
     #logradouro;
     #bairro;
     #cidade;
-    #estado;
+    #uf;
     #cep;
     #numero;
     #complemento;
 
-    constructor(logradouro, bairro, cidade, estado, cep, numero, complemento) {
-        this.logradouro = logradouro;
-        this.bairro = bairro;
-        this.cidade = cidade;
-        this.estado = estado;
-        this.cep = cep;
-        this.numero = numero;
+    constructor(logradouro, bairro, cidade, uf, cep, numero, complemento) { 
+        this.logradouro = logradouro; 
+        this.bairro = bairro; 
+        this.cidade = cidade; 
+        this.uf = uf; 
+        this.cep = cep; 
+        this.numero = numero; 
         this.complemento = complemento;
     }
 
     get logradouro() {
         return this.#logradouro;
     }
-
 
     set logradouro(value) {
         if (!value || value.length < 3) throw new Error("Logradouro inválido");
@@ -44,12 +43,12 @@ export class Endereco {
     }
 
 
-    get estado() {
-        return this.#estado;
+    get uf() {
+        return this.#uf;
     }
 
-    set estado(value) {
-        this.#estado = value;
+    set uf(value) {
+        this.#uf = value;
     }
 
     get cep() {
@@ -74,4 +73,17 @@ export class Endereco {
     set complemento(value) { 
         this.#complemento = value;
      }
+
+    // factory
+    static criar(dados) {
+        return new Endereco(
+            dados.logradouro,
+            dados.bairro,
+            dados.cidade,
+            dados.uf,
+            dados.cep,
+            dados.numero,
+            dados.complemento
+        );
+    }
 }

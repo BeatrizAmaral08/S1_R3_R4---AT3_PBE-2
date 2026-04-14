@@ -3,14 +3,20 @@
 import { Cliente } from "../models/Cliente.js";
 import { Endereco } from "../models/Endereco.js";
 import { Telefone } from "../models/Telefone.js";
-//import clienteRepository from "../repositories/clienteRepository.js";
+import clienteRepository from "../repositories/clienteRepository.js";
 import axios from "axios";
+import { validarCPF } from "../utils/validarCpf.js";
+import { limparNumero } from "../utils/limparNumero.js";
 
 const clienteController = {
 
     criar: async (req, res) => {
         try {
             const { nome, cpf, telefone, cep, numero, complemento } = req.body;
+            const cepLimpo = limparNumero(cep)
+            if(!validarCPF(cpf)){
+                throw new Error("CPF inválido!")
+            }
 
             //valida o cep com 8 digitos
             const cepRegex = /^[0-9]{8}$/;
@@ -23,15 +29,15 @@ const clienteController = {
                 return res.status(400).json({ message: 'CEP não encontrado na API ViaCEP' });
             }
 
-            const endereco = new Endereco(
-                respApi.data.logradouro,
-                respApi.data.bairro,
-                respApi.data.localidade,
-                respApi.data.uf,
-                respApi.data.cep,
-                numero,
-                complemento
-            );
+            const endereco = Endereco.criar({
+                logradouro: respApi.data.logradouro,
+                bairro: respApi.data.bairro,
+                cidade: respApi.data.localidade,
+                uf: respApi.data.uf,
+                cep: cepLimpo,
+                numero: numero,
+                complemento: complemento
+            });
 
             //valida se telefone é um array
             const telefones = [];
@@ -43,11 +49,9 @@ const clienteController = {
                 telefones.push(new Telefone(telefone));
             }
 
-            const cliente = Cliente.criar({ nome, cpf, cep, telefone: telefones });
-
+            const cliente = Cliente.criar({ nome, cpf, cepLimpo, telefone: telefones });
             cliente.endereco = endereco;
-
-            const result = await clienteRepository.criar(cliente);
+            const result = await clienteRepository.criar(cliente, telefones[0], endereco);
 
             res.status(201).json({ result });
 
@@ -88,12 +92,13 @@ const clienteController = {
 
     //edita os dados do cliente buscando ele pelo id
     editar: async (req, res) => {
-        try {
+        try {           
             const { id } = req.params;
             const { nome, cpf, telefone, cep, numero, complemento } = req.body;
 
             //verifica se o cliente exise e puxa seu id
             const clienteExistente = await clienteRepository.buscarPorId(id);
+            
             if (!clienteExistente) {
                 return res.status(404).json({ message: 'Cliente não encontrado' });
             }
@@ -115,6 +120,8 @@ const clienteController = {
 
                 enderecoAtualizado = new Endereco(
                     respApi.data.logradouro, respApi.data.bairro, respApi.data.localidade, respApi.data.uf, respApi.data.cep, numero, complemento );
+
+                enderecoAtualizado.cep = limparNumero(cep)
             }
 
             let telefonesAtualizados = clienteExistente.telefone; // atualiza o telefone pelo existente anteriormente
@@ -129,16 +136,16 @@ const clienteController = {
                     telefonesAtualizados.push(new Telefone(telefone));
                 }
             }
-
+            
             //dados atualizados do cliente
             const clienteAtualizado = {
                 nome: nome || clienteExistente.nome,
                 cpf: cpf || clienteExistente.cpf,
-                telefone: telefonesAtualizados,
-                endereco: enderecoAtualizado
+                // telefone: telefonesAtualizados,
+                // endereco: enderecoAtualizado
             };
 
-            const result = await clienteRepository.atualizar(id, clienteAtualizado);
+            const result = await clienteRepository.editar(id, clienteAtualizado, telefonesAtualizados[0], enderecoAtualizado);
 
             res.status(200).json(result);
 
@@ -160,7 +167,6 @@ const clienteController = {
             }
 
             await clienteRepository.deletar(id);
-
             res.status(200).json({ message: 'Cliente deletado com sucesso' });
 
         } catch (error) {

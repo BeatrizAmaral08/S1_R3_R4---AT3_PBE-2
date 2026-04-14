@@ -16,4 +16,11 @@ export class Telefone {
         }
         this.#numero = value;
     }
+
+   // factory
+    static criar(dados) {
+        return new Telefone(
+            dados.telefone,
+        );
+    }
 }

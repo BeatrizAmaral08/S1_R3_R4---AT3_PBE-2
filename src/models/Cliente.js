@@ -38,7 +38,7 @@ export class Cliente {
     }
 
     set cpf(value) {
-        this.validarCpf(value);          // valida o cfp antes de setar
+        // this.validarCpf(value);          // valida o cfp antes de setar
         const cpfLimpo = value.replace(/\D/g, ''); // remove caracteres que não forem numéricos
         this.#cpf = cpfLimpo;
 
@@ -62,28 +62,42 @@ export class Cliente {
         console.log(value)
         if (!value) throw new Error('CPF não informado');
 
-        // remove caracteres não numéricos
-        const cpfLimpo = value.replace(/\D/g, ''); // '' = remove pontos, traços, espaços, letras etc,
-        ///\D/ = indica qualquer caractere que não seja um dígito (ex: ., -)
-        //g = substitui todas as ocorrências do padrão, não só a primeira”.
-    
-
-        // verifica se tem 11 dígitos
-        if (cpfLimpo.length !== 11) {
-            throw new Error('CPF deve ter exatamente 11 dígitos');
+        // Verifica se tem 11 dígitos ou se é sequência repetida
+        if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+            return false;
         }
 
-        // verifica se todos os dígitos são iguais
-        if (/^(\d)\1{10}$/.test(cpfLimpo)) {
-            throw new Error('CPF não pode ter todos os números iguais');
-            //^ = indica início da string
-            //(\d) = captura o primeiro dígito e guarda em um grupo.
-            //\1{10} = \1 significa que capturou o mesmo dígito do início
-            //{10} = repete 10 vezes.
-            //$ = indica fim da string.
+        let soma = 0;
+        let resto;
+
+        // Validação do 1º dígito
+        for (let i = 1; i <= 9; i++) {
+            soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+        }
+        resto = (soma * 10) % 11;
+
+
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf.substring(9, 10))) {
+            return false;
         }
 
-      
+
+        soma = 0;
+
+
+        // Validação do 2º dígito
+        for (let i = 1; i <= 10; i++) {
+            soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+        }
+        resto = (soma * 10) % 11;
+
+
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf.substring(10, 11))) {
+            return false;
+        }
+
         return true;
     }
 
@@ -95,11 +109,7 @@ export class Cliente {
     }
 
     static criar(dados) {
-        return new Cliente(
-            dados.nome,
-            dados.cpf,
-            dados.cep,
-            Array.isArray(dados.telefone) ? dados.telefone : [dados.telefone]
+        return new Cliente(dados.nome, dados.cpf, dados.cep, Array.isArray(dados.telefone) ? dados.telefone : [dados.telefone]
         );
     }
 }
